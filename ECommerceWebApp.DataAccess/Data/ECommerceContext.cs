@@ -15,6 +15,11 @@ public class ECommerceContext : DbContext
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
+    public DbSet<Seller> Sellers => Set<Seller>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

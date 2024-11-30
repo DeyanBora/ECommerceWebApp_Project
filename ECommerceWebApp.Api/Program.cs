@@ -1,65 +1,16 @@
-//using ECommerceWebApp.Api.Authenticate.Implementations;
-//using ECommerceWebApp.Api.Authenticate.Interfaces;
-//using ECommerceWebApp.Api.Authenticate.Jwt;
-//using ECommerceWebApp.Api.Cors;
-//using ECommerceWebApp.Api.Endpoints;
-//using ECommerceWebApp.Api.Extensions.Authorization;
-//using ECommerceWebApp.Api.Extensions.Endpoint;
-//using ECommerceWebApp.Api.Extensions.Jwt;
-//using ECommerceWebApp.Api.Extensions.Middleware;
-//using ECommerceWebApp.Api.Middleware;
-//using ECommerceWebApp.Api.OpenAPI;
-//using ECommerceWebApp.DataAccess.Data.Extensions;
-
-//var builder = WebApplication.CreateBuilder(args);
-//var jwtSetting = builder.Configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
-////builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-//// Configure Services
-//builder.Services
-//    .AddJwtAppSettings(builder.Configuration) // Register app settings like JwtSettings
-//    .AddRepositories(builder.Configuration) // Register repositories
-//    .AddJwtServices() // Add scoped services like JwtService
-//    .AddProductAuthorization() // Authorization
-//    .AddApiVersioningAndExplorer() // API versioning
-//    .AddSwaggerDocumentation() // Swagger
-//    .AddProductCors(builder.Configuration); // CORS
-//builder.Services.AddJwtAuthentication(jwtSetting); // Authentication
-
-//var app = builder.Build();
-
-//// Configure Middleware
-////app.UseGlobalExceptionHandling(); // Global exception handler
-////app.UseMiddleware<RequestTimingMiddleware>(); // Timing middleware
-////await app.Services.InitializeDbAsync(); // Initialize database
-
-//// Configure HTTP Pipeline
-////
-////app.UseCors(); // CORS
-////app.UseAuthentication(); // Authentication
-////app.UseAuthorization(); // Authorization
-//app.MapProductsEndpoint();
-////app.MapApiEndpoints();
-//app.UseRouting();
-//app.ConfigureSwagger(); // Swagger
-
-//app.UseRouting();
-
-//app.Run();
-
-
-using ECommerceWebApp.Api.Authenticate;
 using ECommerceWebApp.Api.Authenticate.Implementations;
 using ECommerceWebApp.Api.Authenticate.Interfaces;
 using ECommerceWebApp.Api.Authenticate.Jwt;
-using ECommerceWebApp.Api.Authorization;
 using ECommerceWebApp.Api.Cors;
 using ECommerceWebApp.Api.Endpoints;
 using ECommerceWebApp.Api.ErrorHandling;
 using ECommerceWebApp.Api.Extensions.Jwt;
 using ECommerceWebApp.Api.OpenAPI;
+using ECommerceWebApp.Business.Interfaces;
+using ECommerceWebApp.Business.Services;
+using ECommerceWebApp.DataAccess.Data;
 using ECommerceWebApp.DataAccess.Data.Extensions;
-using ECommerceWebApp.DataAccess.Repositories.Implementations;
-using ECommerceWebApp.DataAccess.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -68,13 +19,30 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(nameof(
 var jwtSetting = builder.Configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
 
 builder.Services.AddRepositories(builder.Configuration);
+// Add configuration for ElasticSearch URL
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+
+// Register ISearchService with HttpClient
+builder.Services.AddHttpClient<ISearchService, SearchService>(client =>
+{
+    client.BaseAddress = new Uri("https://your-elastic-api-url"); // Replace with your Elasticsearch API URL
+});
+
+builder.Services.AddRepositories(builder.Configuration);
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
 //Authentication Options
 //builder.Services.AddAuthentication().AddJwtBearer();
 // Authorization Options
 //builder.Services.AddProductAuthorization();
+
+builder.Services.AddDbContext<ECommerceContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ECommerceContext")));
+
+var connectionString = builder.Configuration.GetConnectionString("ECommerceContext");
+
 
 builder.Services.AddJwtAuthentication(jwtSetting);
 builder.Services.AddAuthorization();
@@ -90,22 +58,31 @@ builder.Services.AddApiVersioning(options =>
 //Cors Options
 builder.Services.AddProductCors(builder.Configuration);
 
+//Swagger Options
 builder.Services.AddSwaggerGen()
                 .AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>()
                 .AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
+//Configre Middlewares
 app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.ConfigureExceptionHandler());
 //app.UseMiddleware<RequestTimingMiddleware>();
 
-//await app.Services.InitializeDbAsync();
+//Initialize Database EF
+await app.Services.InitializeDbAsync();
 
+//Configure Endpoints
 app.MapProductsEndpoint();
 app.MapAuthEndpoint();
+app.MapSearchEndpoint();
+
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Configure Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

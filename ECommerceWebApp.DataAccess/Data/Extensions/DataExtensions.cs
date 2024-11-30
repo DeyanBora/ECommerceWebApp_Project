@@ -13,14 +13,14 @@ public static class DataExtensions
         //Automatically apply migration everytime app started
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ECommerceContext>();
-        //await dbContext.Database.MigrateAsync();
+        await dbContext.Database.MigrateAsync();
     }
     public static IServiceCollection AddRepositories(this IServiceCollection services, IConfiguration configuration)
     {
         var ConnectString = configuration.GetConnectionString("ECommerceContext");
         services.AddSqlServer<ECommerceContext>(ConnectString)
-                .AddScoped<IProductsRepository, ProductRepository>();
-
+                .AddScoped<IProductsRepository, ProductRepository>()
+                .AddScoped<IUserRepository, UserRepository>();
         return services;
     }
 }

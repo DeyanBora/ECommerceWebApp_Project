@@ -21,7 +21,7 @@ public static class ErrorHandlingExtensions
 
             var problem = new ProblemDetails
             {
-                Title = "We made a mistake but we are working on it!",
+                Title = "Server Error!",
                 Status = StatusCodes.Status500InternalServerError,
                 Extensions =
                 {

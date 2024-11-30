@@ -1,14 +1,17 @@
 ﻿using ECommerceWebApp.Entities.Entities.Users;
 
-namespace ECommerceWebApp.DataAccess.Repositories.Interfaces
+namespace ECommerceWebApp.DataAccess.Repositories.Interfaces;
+
+public interface IUserRepository
 {
-    public interface IUserRepository
-    {
-        Task CreateAsync(User user);
-        Task DeleteAsync(int id);
-        Task<User> GetAsync(int id);
-        Task<IEnumerable<User>> GetAllAsync(int pageNumber, int pageSize, string? filter);
-        Task UpdateAsync(User addedUser);
-        Task<int> CountAsync(string? filter);
-    }
+    Task<(int TotalCount, IEnumerable<User>)> GetUsersWithPaginationAsync(int pageNumber, int pageSize, string? filter);
+    Task<User?> GetAsync(int id);
+    Task CreateAsync(User user);
+    Task UpdateAsync(User user);
+    Task DeleteAsync(int id, bool softDelete = true);
+    Task<bool> ExistsAsync(int id);
+    Task<int> CountAsync(string? filter);
+    Task<User?> GetByEmailAsync(string email);
+    Task AssignRolesAsync(int userId, IEnumerable<string> roles);
+    Task<IEnumerable<string>> GetUserRolesAsync(int userId);
 }
