@@ -12,6 +12,8 @@ public interface IUserRepository
     Task<bool> ExistsAsync(int id);
     Task<int> CountAsync(string? filter);
     Task<User?> GetByEmailAsync(string email);
-    Task AssignRolesAsync(int userId, IEnumerable<string> roles);
+    Task AssignRolesAsync(int userId, IEnumerable<string> roleNames);
     Task<IEnumerable<string>> GetUserRolesAsync(int userId);
+    Task<bool> UserNameExistsAsync(string userName);
+    Task<bool> EmailExistsAsync(string email);
 }

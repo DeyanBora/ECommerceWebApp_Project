@@ -4,6 +4,6 @@ namespace ECommerceWebApp.Api.Authenticate.Interfaces
 {
     public interface IAuthenticationService
     {
-        UserLoginResultDto Authenticate(UserLoginPostDto userLoginDto);
+        Task<IResult> AuthenticateAsync(UserLoginPostDto userLoginDto);
     }
 }

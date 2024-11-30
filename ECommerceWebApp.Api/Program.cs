@@ -10,6 +10,8 @@ using ECommerceWebApp.Business.Interfaces;
 using ECommerceWebApp.Business.Services;
 using ECommerceWebApp.DataAccess.Data;
 using ECommerceWebApp.DataAccess.Data.Extensions;
+using ECommerceWebApp.Entities.Entities.Users;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -30,8 +32,14 @@ builder.Services.AddHttpClient<ISearchService, SearchService>(client =>
 });
 
 builder.Services.AddRepositories(builder.Configuration);
+
+// Register password hasher
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 
 //Authentication Options
 //builder.Services.AddAuthentication().AddJwtBearer();
@@ -76,7 +84,7 @@ await app.Services.InitializeDbAsync();
 app.MapProductsEndpoint();
 app.MapAuthEndpoint();
 app.MapSearchEndpoint();
-
+app.MapUserEndpoints();
 
 app.UseCors();
 app.UseAuthentication();

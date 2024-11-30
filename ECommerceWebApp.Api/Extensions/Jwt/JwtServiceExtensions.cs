@@ -23,7 +23,7 @@ namespace ECommerceWebApp.Api.Extensions.Jwt
 
                 var validationParameters = new TokenValidationParameters
                 {
-                    ClockSkew = TimeSpan.Zero, // default: 5 min
+                    ClockSkew = TimeSpan.FromMinutes(1), // Adjusted ClockSkew
                     RequireSignedTokens = true,
 
                     ValidateIssuerSigningKey = true,
@@ -32,13 +32,14 @@ namespace ECommerceWebApp.Api.Extensions.Jwt
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
 
-                    ValidateAudience = true, //default : false
+                    ValidateAudience = true,
                     ValidAudience = jwtSettings.Audience,
 
-                    ValidateIssuer = true, //default : false
+                    ValidateIssuer = true,
                     ValidIssuer = jwtSettings.Issuer,
 
-                    TokenDecryptionKey = new SymmetricSecurityKey(encryptionkey)
+                    // Remove TokenDecryptionKey since encryption is not used
+                    // TokenDecryptionKey = new SymmetricSecurityKey(encryptionkey)
                 };
 
                 options.RequireHttpsMetadata = false;

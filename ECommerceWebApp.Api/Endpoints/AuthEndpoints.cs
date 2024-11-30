@@ -27,7 +27,7 @@ public static class AuthEndpoints
             try
             {
                 // Authenticate user
-                var userLoginResult = authService.Authenticate(userLoginDto);
+                var userLoginResult = await authService.AuthenticateAsync(userLoginDto);
 
                 if (userLoginResult == null)
                 {
@@ -50,6 +50,4 @@ public static class AuthEndpoints
 
         return authgroup;
     }
-
-
 }

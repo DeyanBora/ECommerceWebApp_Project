@@ -11,7 +11,7 @@ namespace ECommerceWebApp.Business.Interfaces
     {
         Task<(int TotalCount, IEnumerable<UserDto>)> GetUsersWithPaginationAsync(int pageNumber, int pageSize, string? filter);
         Task<UserDto?> GetUserByIdAsync(int id);
-        Task<UserDto> CreateUserAsync(UserCreateDto userCreateDto, IEnumerable<string> roles);
+        Task<UserDto> CreateUserAsync(UserRegistrationRequestDto userCreateDto);
         Task<UserDto?> UpdateUserAsync(int id, UserUpdateDto userUpdateDto);
         Task<bool> DeleteUserAsync(int id);
     }

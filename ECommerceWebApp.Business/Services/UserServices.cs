@@ -2,8 +2,9 @@
 using ECommerceWebApp.DataAccess.Repositories.Interfaces;
 using ECommerceWebApp.Entities.Entities.Users;
 using ECommerceWebApp.Shared.DTOs;
-using System.Text;
+using Microsoft.AspNetCore.Identity;
 namespace ECommerceWebApp.Business.Services;
+
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
@@ -17,7 +18,7 @@ public class UserService : IUserService
     {
         var (totalCount, users) = await _userRepository.GetUsersWithPaginationAsync(pageNumber, pageSize, filter);
 
-        var userDtos = users.Select(user => new UserDto(user.Id, user.FirstName, user.LastName, user.Email));
+        var userDtos = users.Select(user => new UserDto(user.Id, user.FirstName, user.LastName, user.UserName, user.Email));
         return (totalCount, userDtos);
     }
 
@@ -26,37 +27,41 @@ public class UserService : IUserService
         var user = await _userRepository.GetAsync(id);
         if (user == null) return null;
 
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email);
+        return new UserDto(user.Id, user.FirstName, user.LastName,user.UserName, user.Email);
     }
 
-    public async Task<UserDto> CreateUserAsync(UserCreateDto userCreateDto, IEnumerable<string> roles)
+    public async Task<UserDto> CreateUserAsync(UserRegistrationRequestDto userCreateDto)
     {
-        // Validate the roles
-        var roleList = roles.ToList();
-        if (!roleList.Any())
+        //Db Control
+        if (await _userRepository.UserNameExistsAsync(userCreateDto.UserName))
         {
-            throw new ArgumentException("At least one role must be assigned to the user.");
+            throw new ArgumentException("A user with this user name already exists.");
         }
 
-        // Hash the password (placeholder, replace with secure hashing logic)
-        var hashedPassword = HashPassword(userCreateDto.Password);
+        if (await _userRepository.EmailExistsAsync(userCreateDto.Email))
+        {
+            throw new ArgumentException("A user with this email already exists.");
+        }
+
+        // Create an instance of PasswordHasher
+        var passwordHasher = new PasswordHasher<User>();
 
         var user = new User
         {
             FirstName = userCreateDto.FirstName,
             LastName = userCreateDto.LastName,
+            UserName = userCreateDto.UserName,
             Email = userCreateDto.Email,
-            Password = hashedPassword,
+            Password = "",
+            SecurityStamp = Guid.NewGuid(),
         };
+        user.Password = passwordHasher.HashPassword(user, userCreateDto.Password);
 
         // Create the user in the database
         await _userRepository.CreateAsync(user);
 
-        // Assign roles to the user
-        await _userRepository.AssignRolesAsync(user.Id, roleList);
-
         // Map back to DTO
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email);
+        return new UserDto(user.Id, user.FirstName, user.LastName, user.UserName, user.Email);
     }
 
     public async Task<UserDto?> UpdateUserAsync(int id, UserUpdateDto userUpdateDto)
@@ -71,7 +76,7 @@ public class UserService : IUserService
 
         await _userRepository.UpdateAsync(user);
 
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email);
+        return new UserDto(user.Id, user.FirstName, user.LastName, user.UserName, user.Email);
     }
 
     public async Task<bool> DeleteUserAsync(int id)
@@ -81,11 +86,5 @@ public class UserService : IUserService
 
         await _userRepository.DeleteAsync(id);
         return true;
-    }
-
-    private string HashPassword(string password)
-    {
-        // Placeholder for password hashing logic (e.g., using BCrypt or similar libraries)
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
     }
 }

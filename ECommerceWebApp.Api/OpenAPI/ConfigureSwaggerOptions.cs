@@ -25,11 +25,11 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
                 {
                     Title = $"E-Commerce API {description.ApiVersion}",
                     Version = description.ApiVersion.ToString(),
-                    Description = "API for managing products, users, and orders.",
+                    Description = "API for managing products with Elastic Search.",
                     Contact = new OpenApiContact
                     {
-                        Name = "Support Team",
-                        Email = "support@example.com",
+                        Name = "Bora",
+                        Email = "deyan.cetin@lbbilisim.com",
                         Url = new Uri("https://example.com/contact")
                     },
                     License = new OpenApiLicense

@@ -10,16 +10,21 @@ namespace ECommerceWebApp.Api.Authenticate.Jwt
 {
     public class JwtService : IJwtService
     {
-        public JwtTokenResultDto GenerateToken(JwtSettings jwtSetting, UserTokenInfo userTokenInfo, IList<string> roles, List<Claim> claims)
+        public JwtTokenResultDto GenerateToken(JwtSettings jwtSetting, UserTokenInfo userTokenInfo, IList<string> roles/*, List<Claim> claims*/)
         {
             var secretKey = Encoding.UTF8.GetBytes(jwtSetting.SecretKey); // longer that 16 character
             var signingCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature);
 
 
             var encryptionkey = Encoding.UTF8.GetBytes(jwtSetting.Encryptkey); //must be 16 character
-            var encryptingCredentials = new EncryptingCredentials(new SymmetricSecurityKey(encryptionkey), SecurityAlgorithms.Aes128KW, SecurityAlgorithms.Aes128CbcHmacSha256);
+            /*var encryptingCredentials = new EncryptingCredentials(new SymmetricSecurityKey(encryptionkey), SecurityAlgorithms.Aes128KW, SecurityAlgorithms.Aes128CbcHmacSha256);*/
 
-            var _claims = _getClaims(userTokenInfo, roles, claims);
+            if (secretKey.Length < 16 || encryptionkey.Length != 16)
+            {
+                throw new ArgumentException("SecretKey must be at least 16 characters, and EncryptKey must be exactly 16 characters.");
+            }
+
+            var _claims = _getClaims(userTokenInfo, roles, new List<Claim>());
             var identity = new ClaimsIdentity(_claims, "custom", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             var principal = new ClaimsPrincipal(identity);
 
@@ -31,12 +36,10 @@ namespace ECommerceWebApp.Api.Authenticate.Jwt
                 NotBefore = DateTime.Now.AddMinutes(jwtSetting.NotBeforeMinutes),
                 Expires = DateTime.Now.AddMinutes(jwtSetting.ExpirationMinutes),
                 SigningCredentials = signingCredentials,
-                EncryptingCredentials = encryptingCredentials,
+                //EncryptingCredentials = encryptingCredentials,
                 Subject = new ClaimsIdentity(_claims),
                 //Claims = _claims.ToDictionary(c => c.Type, c => (object)c.Value)
             };
-
-
 
             //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             //JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
@@ -99,7 +102,7 @@ namespace ECommerceWebApp.Api.Authenticate.Jwt
                 ValidAudience = jwtSetting.Audience,
 
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey)),
-                TokenDecryptionKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.Encryptkey))
+                //TokenDecryptionKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.Encryptkey))
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

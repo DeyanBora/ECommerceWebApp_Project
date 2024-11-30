@@ -26,7 +26,7 @@
         public string? PhoneNumber { get; set; }
 
         [MaxLength(50)]
-        public string? UserName { get; set; }
+        public required string UserName { get; set; }
 
         [Required]
         public int RoleId { get; set; }

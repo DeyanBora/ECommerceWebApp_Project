@@ -140,4 +140,16 @@ public class UserRepository : IUserRepository
         return dbContext.Users.Where(user => !user.IsDeleted &&
             (user.FirstName.Contains(filter) || user.LastName.Contains(filter) || user.Email.Contains(filter)));
     }
+
+    public async Task<bool> UserNameExistsAsync(string userName)
+    {
+        return await dbContext.Users
+            .AnyAsync(u => u.UserName.ToLower() == userName.ToLower());
+    }
+
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        return await dbContext.Users
+            .AnyAsync(u => u.Email.ToLower() == email.ToLower());
+    }
 }
