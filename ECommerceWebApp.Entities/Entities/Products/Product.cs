@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ECommerceWebApp.Entities.Entities.Products
 {
@@ -46,8 +47,11 @@ namespace ECommerceWebApp.Entities.Entities.Products
         public string? Slug { get; set; }
 
         // Navigation properties
+
         public virtual Category Category { get; set; } = null!;
+
         public virtual Brand Brand { get; set; } = null!;
+
         public virtual Manufacturer Manufacturer { get; set; } = null!;
     }
 }

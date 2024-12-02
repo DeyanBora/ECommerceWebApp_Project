@@ -1,6 +1,7 @@
 ﻿namespace ECommerceWebApp.Entities.Entities.Products
 {
     using System.ComponentModel.DataAnnotations;
+    using System.Text.Json.Serialization;
 
     public class Manufacturer : BaseEntity
     {
@@ -18,6 +19,7 @@
         public string? Slug { get; set; }
 
         // Navigation properties
+        [JsonIgnore]
         public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
         public Manufacturer()
