@@ -5,7 +5,7 @@ namespace ECommerceWebApp.Api.Extensions.Authorization;
 
 public static class AuthorizationPolicyExtensions
 {
-    public static IServiceCollection AddProductAuthorization(this IServiceCollection services)
+    /*public static IServiceCollection AddProductAuthorization(this IServiceCollection services)
     {
         services.AddAuthorization(options =>
         {
@@ -20,5 +20,5 @@ public static class AuthorizationPolicyExtensions
         });
 
         return services;
-    }
+    }*/
 }

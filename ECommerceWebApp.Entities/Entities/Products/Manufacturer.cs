@@ -18,7 +18,7 @@
         public string? Slug { get; set; }
 
         // Navigation properties
-        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
         public Manufacturer()
         {

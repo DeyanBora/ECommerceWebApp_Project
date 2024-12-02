@@ -1,5 +1,7 @@
 ﻿using ECommerceWebApp.Api.Authenticate.Interfaces;
+using ECommerceWebApp.Api.JWT;
 using ECommerceWebApp.Shared.DTOs;
+using Microsoft.AspNetCore.Mvc;
 namespace ECommerceWebApp.Api.Endpoints;
 
 public static class AuthEndpoints
@@ -12,7 +14,7 @@ public static class AuthEndpoints
             .WithOpenApi()
             .WithTags("Authentication");
 
-        authgroup.MapPost("/login", async (IAuthenticationService authService, UserLoginPostDto userLoginDto, ILoggerFactory loggerFactory) =>
+        authgroup.MapPost("/login", async (UserLoginPostDto userLoginDto, [FromServices] IAuthenticationService authenticationService, [FromServices] ITokenGenerator tokenGenerator, ILoggerFactory loggerFactory) =>
         {
             // Create a logger for a specific category
             var logger = loggerFactory.CreateLogger("UserEndpoints");
@@ -27,16 +29,17 @@ public static class AuthEndpoints
             try
             {
                 // Authenticate user
-                var userLoginResult = await authService.AuthenticateAsync(userLoginDto);
-
-                if (userLoginResult == null)
+                //var userLoginResult = await tokenGenerator.GenerateToken(userLoginDto.Email);
+                var userLoginResult = await authenticationService.AuthenticateAsync(userLoginDto);
+                var Jtoken = tokenGenerator.GenerateToken(userLoginDto.Email);
+                if (Jtoken == null)
                 {
                     logger.LogWarning("Authentication failed for email: {Email}", userLoginDto.Email);
                     return Results.Json(new { Message = "Invalid credentials." }, statusCode: StatusCodes.Status401Unauthorized);
                 }
 
                 // Return successful response
-                return Results.Ok(userLoginResult);
+                return Results.Ok(Jtoken);
             }
             catch (Exception ex)
             {

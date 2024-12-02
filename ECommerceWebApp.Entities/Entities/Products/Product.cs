@@ -6,6 +6,8 @@ namespace ECommerceWebApp.Entities.Entities.Products
 
     public class Product : BaseEntity
     {
+        public Guid ElasticId { get; set; }
+
         [Required]
         [StringLength(50)]
         public required string ErpCode { get; set; }
@@ -25,10 +27,7 @@ namespace ECommerceWebApp.Entities.Entities.Products
         public required int BrandId { get; set; }
 
         [Required]
-        public int ManufacturerId { get; set; }
-
-        [Required]
-        public int SellerId { get; set; }
+        public required int ManufacturerId { get; set; }
 
         [Required]
         [Range(0, int.MaxValue)]
@@ -41,8 +40,7 @@ namespace ECommerceWebApp.Entities.Entities.Products
 
         [Required]
         [Url]
-        [StringLength(100)]
-        public required string ImageUri { get; set; }
+        public required string ImageUrl { get; set; }
 
         [MaxLength(100)]
         public string? Slug { get; set; }
@@ -51,6 +49,5 @@ namespace ECommerceWebApp.Entities.Entities.Products
         public virtual Category Category { get; set; } = null!;
         public virtual Brand Brand { get; set; } = null!;
         public virtual Manufacturer Manufacturer { get; set; } = null!;
-        public virtual Seller Seller { get; set; } = null!;
     }
 }

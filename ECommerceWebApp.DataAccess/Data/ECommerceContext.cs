@@ -19,7 +19,6 @@ public class ECommerceContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
-    public DbSet<Seller> Sellers => Set<Seller>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

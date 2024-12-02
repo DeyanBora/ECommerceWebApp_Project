@@ -1,18 +1,17 @@
-﻿using ECommerceWebApp.Api.Authorization;
-using ECommerceWebApp.DataAccess.Repositories.Interfaces;
-using ECommerceWebApp.Entities.Entities.Products;
+﻿using ECommerceWebApp.Business.Interfaces;
+using ECommerceWebApp.Business.Services;
+using ECommerceWebApp.Business.Services.Interfaces;
 using ECommerceWebApp.Shared.DTOs;
-using ECommerceWebApp.Business.Extensions;
+using System.Threading;
+
 namespace ECommerceWebApp.Api.Endpoints;
 
 public static class ProductEndpoints
 {
     const string GetProductV1EndpointName = "GetProductV1";
-    const string GetProductV2EndpointName = "GetProductV2";
 
     public static RouteGroupBuilder MapProductsEndpoint(this IEndpointRouteBuilder routes)
     {
-
         var group = routes.NewVersionedApi().MapGroup("/products")
                         .HasApiVersion(1.0)
                         .HasApiVersion(2.0)
@@ -20,133 +19,144 @@ public static class ProductEndpoints
                         .WithOpenApi()
                         .WithTags("Products");
 
-        // V1 GET ENDPOINTS
-        
+        // V1 GET ALL PRODUCTS
         group.MapGet("/", async (
-                                IProductsRepository productsRepository, 
-                                ILoggerFactory loggerFactory, 
-                                [AsParameters]GetProductsDtoV1 request,
+                                IProductService productService,
+                                ILoggerFactory loggerFactory,
+                                [AsParameters] GetProductsDto request,
                                 HttpContext http) =>
         {
-            var totalCount = await productsRepository.CountAsync(request.Filter);
+            var products = await productService.GetAllProductsAsync(request);
+            var totalCount = await productService.GetTotalCountAsync(request.Filter); // You may need to add this method
             http.Response.AddPaginationHeader(totalCount, request.PageSize);
-
-            return Results.Ok((await productsRepository.GetAllAsync(
-                request.PageNumber, 
-                request.PageSize,
-                request.Filter))
-                .Select(product => product.ToDtoV1()));
+            return Results.Ok(products);
         })
             .RequireAuthorization()
             .MapToApiVersion(1.0)
             .WithSummary("Gets All Products")
             .WithDescription("Gets all products by using filtering and pagination");
 
-        group.MapGet("/{id}", async (IProductsRepository productsRepository, int id) =>
+        // V1 GET PRODUCT BY ID
+        group.MapGet("/{id}", async (IProductService productService, int id) =>
         {
-            Product? product = await productsRepository.GetAsync(id);
-            return product is not null ? Results.Ok(product.ToDtoV1()) : Results.NotFound();
+            var product = await productService.GetProductByIdAsync(id);
+            return product is not null ? Results.Ok(product) : Results.NotFound();
         })
         .WithName(GetProductV1EndpointName)
-        .RequireAuthorization(Policies.ReadAccess)
+        .RequireAuthorization()
         .MapToApiVersion(1.0)
         .WithSummary("Gets product by id")
         .WithDescription("Gets the product that has specified id");
-        
-        //V2 GET ENDPOINTS
-        group.MapGet("/", async (
-                                IProductsRepository productsRepository, 
-                                ILoggerFactory loggerFactory,
-                                [AsParameters] GetProductsDtoV1 request,
-                                HttpContext http) =>
-        {
-            var totalCount = await productsRepository.CountAsync(request.Filter);
-            http.Response.AddPaginationHeader(totalCount, request.PageSize);
 
-            return Results.Ok((await productsRepository.GetAllAsync(
-                request.PageNumber, 
-                request.PageSize, 
-                request.Filter))
-                .Select(product => product.ToDtoV2()));
-        })
-            .MapToApiVersion(2.0)
-            .WithSummary("Gets All Products")
-            .WithDescription("Gets all products by using filtering and pagination"); ; 
-
-        group.MapGet("/{id}", async (IProductsRepository productsRepository, int id) =>
+        // V1 POST CREATE PRODUCT
+        group.MapPost("/", async (IProductService productService, IElasticApiService elasticApiService, CreateProductDto productDto, CancellationToken cancellationToken) =>
         {
-            Product? product = await productsRepository.GetAsync(id);
-            return product is not null ? Results.Ok(product.ToDtoV2()) : Results.NotFound();
-        })
-        .WithName(GetProductV2EndpointName)
-        .RequireAuthorization(Policies.ReadAccess)
-        .MapToApiVersion(2.0)
-        .WithSummary("Gets product by id")
-        .WithDescription("Gets the product that has specified id");
-
-        //V1 POST ENDPOINTS
-        group.MapPost("/", async (IProductsRepository productsRepository, CreateProductDto productDto) =>
-        {
-            Product product = new()
+            // Validate the incoming DTO
+            if (string.IsNullOrWhiteSpace(productDto.ErpCode) || string.IsNullOrWhiteSpace(productDto.Title) ||
+                string.IsNullOrWhiteSpace(productDto.Description) || string.IsNullOrWhiteSpace(productDto.ImageUrl))
             {
-                Title = productDto.Title,
-                Description = productDto.Description,
-                Price = productDto.Price,
-                CategoryId = 1,
-                ErpCode = "",
-                ImageUri = "",
-                BrandId = 1,
-            };
+                return Results.BadRequest("All required fields must be provided.");
+            }
 
-            await productsRepository.CreateAsync(product); 
-            return Results.CreatedAtRoute(GetProductV1EndpointName, new { id = product.Id }, product);
+            try
+            {
+                var createdProduct = await productService.CreateProductAsync(productDto);
+                //Send to ElasticSearch
+                var elasticResponse = await elasticApiService.CreateProductAsync(createdProduct.Id, cancellationToken);
+
+                var responsePayload = new
+                {
+                    CreatedProduct = createdProduct,
+                    ElasticResponse = elasticResponse
+                };
+
+                return Results.CreatedAtRoute(GetProductV1EndpointName, new { id = createdProduct.Id }, responsePayload);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem("An error occurred while creating the product: " + ex.Message);
+            }
         })
-        .RequireAuthorization(Policies.WriteAccess)
+        .RequireAuthorization()
         .MapToApiVersion(1.0)
         .WithSummary("Creates a new product")
         .WithDescription("Creates a new product by specified properties");
 
-        //V1 PUT ENDPOINTS
-        group.MapPut("/{id}", async (IProductsRepository productsRepository, int id, UpdateProductDto updateProductDto) =>
+        // V1 PUT UPDATE PRODUCT
+        group.MapPut("/{id}", async (IProductService productService, int id, IElasticApiService elasticApiService, UpdateProductDto updateProductDto, CancellationToken cancellationToken) =>
         {
-            Product? existingProduct = await productsRepository.GetAsync(id);
-            if (existingProduct is null)
+            var success = await productService.UpdateProductAsync(id, updateProductDto);
+
+            var elasticResponse = await elasticApiService.UpdateProductAsync(id, cancellationToken);
+
+            var responsePayload = new
             {
-                return Results.NotFound();
-            }
-
-            existingProduct.Title = updateProductDto.Title;
-            existingProduct.ErpCode = "updateProductDto.ErpCode";
-            existingProduct.Price = updateProductDto.Price;
-            existingProduct.Description = updateProductDto.Description;
-            existingProduct.ImageUri = "updateProductDto.ImageUri";
-            existingProduct.CategoryId = 1;
-
-            await productsRepository.UpdateAsync(existingProduct);
-            return Results.NoContent();
+                UpdatedProduct = success,
+                ElasticResponse = elasticResponse
+            };
+            
+            return success ? Results.Ok(responsePayload) : Results.NotFound();
         })
-        .RequireAuthorization(Policies.WriteAccess).MapToApiVersion(1.0)
-        .WithSummary("Updates a product")
+        .RequireAuthorization()
+        .MapToApiVersion(1.0)
+        .WithSummary("Updates a Product")
         .WithDescription("Updates a product using given properties for the specified id");
-        
 
-        //V1 DELETE ENDPOINTS
-        group.MapDelete("/{id}", async (IProductsRepository productsRepository, int id) =>
+        // V1 DELETE PRODUCT
+        group.MapDelete("/{id}", async (IProductService productService, IElasticApiService elasticApiService, int id) =>
         {
-            Product? product = await productsRepository.GetAsync(id);
-
-            if (product is not null)
-            {
-                await productsRepository.DeleteAsync(id);
-            }
-
-            return Results.NoContent();
+            var success = await productService.DeleteProductAsync(id);
+            var elasticResponse = await elasticApiService.DeleteProductAtElasticAsync(id, CancellationToken.None);
+            return Results.NoContent(); // Optionally, return NotFound() if not successful
         })
-        .RequireAuthorization(Policies.WriteAccess)
+        .RequireAuthorization()
         .MapToApiVersion(1.0)
         .WithSummary("Deletes a product")
         .WithDescription("Deletes a product that has specified id");
 
+        // V1 GET PRODUCT FOR ELASTICSEARCH
+        group.MapGet("/e/{id}", async (IProductService productService, int id) =>
+        {
+            var product = await productService.GetProductForElasticSearchAsync(id);
+            return product is not null ? Results.Ok(product) : Results.NotFound();
+        })
+        .WithName("Elastic String Getter")
+        .RequireAuthorization()
+        .MapToApiVersion(1.0)
+        .WithSummary("Gets product by id for ElasticSearch type string")
+        .WithDescription("Gets the product that has specified id ElasticSearch type string");
+
         return group;
     }
 }
+
+////V2 GET ENDPOINTS
+//group.MapGet("/", async(
+//                        IProductsRepository productsRepository,
+//                        ILoggerFactory loggerFactory,
+//                        [AsParameters] GetProductsDtoV1 request,
+//                        HttpContext http) =>
+//        {
+//            var totalCount = await productsRepository.CountAsync(request.Filter);
+//http.Response.AddPaginationHeader(totalCount, request.PageSize);
+
+//            return Results.Ok((await productsRepository.GetAllAsync(
+//                request.PageNumber,
+//                request.PageSize,
+//                request.Filter))
+//                .Select(product => product.ToDtoV2()));
+//        })
+//            .MapToApiVersion(2.0)
+//            .WithSummary("Gets All Products")
+//            .WithDescription("Gets all products by using filtering and pagination"); ;
+
+//group.MapGet("/{id}", async (IProductsRepository productsRepository, int id) =>
+//{
+//    Product? product = await productsRepository.GetAsync(id);
+//    return product is not null ? Results.Ok(product.ToDtoV2()) : Results.NotFound();
+//})
+//.WithName(GetProductV2EndpointName)
+//.RequireAuthorization()
+//.MapToApiVersion(2.0)
+//.WithSummary("Gets product by id")
+//.WithDescription("Gets the product that has specified id");

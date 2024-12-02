@@ -4,6 +4,7 @@ using ECommerceWebApp.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceWebApp.DataAccess.Migrations
 {
     [DbContext(typeof(ECommerceContext))]
-    partial class ECommerceContextModelSnapshot : ModelSnapshot
+    [Migration("20241201085843_refreshDbFields")]
+    partial class refreshDbFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -202,9 +205,6 @@ namespace ECommerceWebApp.DataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("ElasticId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("ErpCode")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -212,7 +212,8 @@ namespace ECommerceWebApp.DataAccess.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -223,6 +224,9 @@ namespace ECommerceWebApp.DataAccess.Migrations
                     b.Property<decimal>("Price")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SellerId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Slug")
                         .HasMaxLength(100)
@@ -250,7 +254,56 @@ namespace ECommerceWebApp.DataAccess.Migrations
 
                     b.HasIndex("ManufacturerId");
 
+                    b.HasIndex("SellerId");
+
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("ECommerceWebApp.Entities.Entities.Products.Seller", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContactInfo")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Sellers");
                 });
 
             modelBuilder.Entity("ECommerceWebApp.Entities.Entities.Users.Role", b =>
@@ -414,11 +467,19 @@ namespace ECommerceWebApp.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ECommerceWebApp.Entities.Entities.Products.Seller", "Seller")
+                        .WithMany("Products")
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Brand");
 
                     b.Navigation("Category");
 
                     b.Navigation("Manufacturer");
+
+                    b.Navigation("Seller");
                 });
 
             modelBuilder.Entity("RoleUser", b =>
@@ -447,6 +508,11 @@ namespace ECommerceWebApp.DataAccess.Migrations
                 });
 
             modelBuilder.Entity("ECommerceWebApp.Entities.Entities.Products.Manufacturer", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("ECommerceWebApp.Entities.Entities.Products.Seller", b =>
                 {
                     b.Navigation("Products");
                 });

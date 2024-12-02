@@ -3,7 +3,7 @@
 public static class CorsExtensions
 {
     private const string allowedOriginSetting = "AllowedOrigin";
-    public static IServiceCollection AddProductCors(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddToCorsProject(this IServiceCollection services, IConfiguration configuration)
     {
         return services.AddCors(options => {
             options.AddDefaultPolicy(corsBuilder =>
