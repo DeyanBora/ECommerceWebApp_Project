@@ -8,34 +8,67 @@ public static class ErrorHandlingExtensions
 {
     public static void ConfigureExceptionHandler(this IApplicationBuilder app)
     {
-        app.Run(async context =>
+        app.UseExceptionHandler(errorApp =>
         {
-            var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
-                                .CreateLogger("Error Handling");
-
-            var exceptionDetails = context.Features.Get<IExceptionHandlerFeature>();
-            var exception = exceptionDetails?.Error;
-
-            logger.LogError(exception, "Could not process a request on machine {Machine}. TraceId: {TraceId}",
-            Environment.MachineName, Activity.Current?.TraceId);
-
-            var problem = new ProblemDetails
+            errorApp.Run(async context =>
             {
-                Title = "Server Error!",
-                Status = StatusCodes.Status500InternalServerError,
-                Extensions =
+                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+                                    .CreateLogger("GlobalExceptionHandler");
+
+                var exceptionDetails = context.Features.Get<IExceptionHandlerFeature>();
+                var exception = exceptionDetails?.Error;
+
+                var statusCode = exception switch
                 {
-                    {"traceId", Activity.Current?.TraceId.ToString()}
-                }
-            };
+                    ArgumentException => StatusCodes.Status400BadRequest,
+                    UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                    _ => StatusCodes.Status500InternalServerError
+                };
 
-            var environment = context.RequestServices.GetRequiredService<IHostEnvironment>();
-            if (environment.IsDevelopment())
-            {
-                problem.Detail = exception?.ToString();
-            }
+                logger.LogError(exception,
+                    "An error occurred while processing the request. Machine: {Machine}, TraceId: {TraceId}",
+                    Environment.MachineName, Activity.Current?.TraceId);
 
-            await Results.Problem(problem).ExecuteAsync(context);
+                var problem = new ProblemDetails
+                {
+                    Title = GetProblemTitle(statusCode),
+                    Status = statusCode,
+                    Detail = GetProblemDetail(context, exception),
+                    Extensions =
+                    {
+                        { "traceId", Activity.Current?.TraceId.ToString() },
+                        { "machine", Environment.MachineName }
+                    }
+                };
+
+                context.Response.ContentType = "application/problem+json";
+                context.Response.StatusCode = statusCode;
+
+                await context.Response.WriteAsJsonAsync(problem);
+            });
         });
+    }
+
+    private static string GetProblemTitle(int statusCode)
+    {
+        return statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Bad Request",
+            StatusCodes.Status401Unauthorized => "Unauthorized Access",
+            StatusCodes.Status500InternalServerError => "Server Error",
+            _ => "An Error Occurred"
+        };
+    }
+
+    private static string GetProblemDetail(HttpContext context, Exception? exception)
+    {
+        var environment = context.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (environment.IsDevelopment())
+        {
+            // Include exception details in development environment
+            return exception?.ToString() ?? "An error occurred.";
+        }
+
+        return exception?.Message ?? "An error occurred while processing the request.";
     }
 }

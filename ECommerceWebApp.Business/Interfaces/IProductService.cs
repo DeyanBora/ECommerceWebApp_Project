@@ -1,4 +1,4 @@
-﻿using ECommerceWebApp.Shared.DTOs;
+﻿using ECommerceWebApp.Shared.DTOs.ProductDtos;
 
 namespace ECommerceWebApp.Business.Services.Interfaces
 {

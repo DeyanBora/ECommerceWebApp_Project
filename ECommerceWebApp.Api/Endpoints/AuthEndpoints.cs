@@ -31,15 +31,15 @@ public static class AuthEndpoints
                 // Authenticate user
                 //var userLoginResult = await tokenGenerator.GenerateToken(userLoginDto.Email);
                 var userLoginResult = await authenticationService.AuthenticateAsync(userLoginDto);
-                var Jtoken = tokenGenerator.GenerateToken(userLoginDto.Email);
-                if (Jtoken == null)
+                //var Jtoken = tokenGenerator.GenerateToken(userLoginDto.Email);
+                if (userLoginResult == null)
                 {
                     logger.LogWarning("Authentication failed for email: {Email}", userLoginDto.Email);
                     return Results.Json(new { Message = "Invalid credentials." }, statusCode: StatusCodes.Status401Unauthorized);
                 }
 
                 // Return successful response
-                return Results.Ok(Jtoken);
+                return Results.Ok(userLoginResult);
             }
             catch (Exception ex)
             {

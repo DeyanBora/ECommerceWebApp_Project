@@ -1,7 +1,5 @@
 ﻿using ECommerceWebApp.Business.Interfaces;
-using ECommerceWebApp.Business.Services;
 using ECommerceWebApp.Entities.Entities.Products;
-using ECommerceWebApp.Shared.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerceWebApp.Api.Endpoints
@@ -30,6 +28,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error creating product: {ex.Message}");
                 }
             })
+            .RequireAuthorization()
             .WithSummary("Creates a product in Elasticsearch")
             .WithDescription("Creates a new product in Elasticsearch with the provided details.");
 
@@ -46,6 +45,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error updating product: {ex.Message}");
                 }
             })
+                .RequireAuthorization()
             .WithSummary("Updates a product in Elasticsearch")
             .WithDescription("Updates an existing product in Elasticsearch with the provided details.");
 
@@ -62,6 +62,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error deleting product: {ex.Message}");
                 }
             })
+                .RequireAuthorization()
             .WithSummary("Deletes a product in Elasticsearch")
             .WithDescription("Deletes a product from Elasticsearch using its ID.");
 
@@ -78,6 +79,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error retrieving products: {ex.Message}");
                 }
             })
+                .RequireAuthorization()
             .WithSummary("Retrieves all products in Elasticsearch")
             .WithDescription("Fetches all products currently stored in Elasticsearch.");
 
@@ -94,6 +96,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error adding products in bulk: {ex.Message}");
                 }
             })
+                .RequireAuthorization()
             .WithSummary("Bulk add products in Elasticsearch")
             .WithDescription("Adds multiple products to Elasticsearch in a single operation.");
 
@@ -112,6 +115,7 @@ namespace ECommerceWebApp.Api.Endpoints
                     return Results.Problem($"Error ReIndex: {ex.Message}");
                 }
             })
+                .RequireAuthorization()
             .WithSummary("ReIndex products to Elasticsearch")
             .WithDescription("ReIndex products to Elasticsearch in a single operation.");
         }

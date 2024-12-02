@@ -1,5 +1,5 @@
 ﻿using ECommerceWebApp.Entities.Entities.Products;
-using ECommerceWebApp.Shared.DTOs;
+using ECommerceWebApp.Shared.DTOs.ProductDtos;
 
 namespace ECommerceWebApp.Business.Extensions;
 public static class ProductExtension

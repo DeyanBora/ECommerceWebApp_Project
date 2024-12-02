@@ -2,7 +2,7 @@
 using ECommerceWebApp.Business.Services.Interfaces;
 using ECommerceWebApp.DataAccess.Repositories.Interfaces;
 using ECommerceWebApp.Entities.Entities.Products;
-using ECommerceWebApp.Shared.DTOs;
+using ECommerceWebApp.Shared.DTOs.ProductDtos;
 using Microsoft.Extensions.Logging;
 
 namespace ECommerceWebApp.Business.Services

@@ -48,6 +48,7 @@ public class ProductRepository : IProductsRepository
 
     public async Task CreateAsync(Product product)
     {
+        product.CreatedDate = DateTime.UtcNow;
         dbContext.Products.Add(product);
         await dbContext.SaveChangesAsync();
 
@@ -55,7 +56,8 @@ public class ProductRepository : IProductsRepository
     }
 
     public async Task UpdateAsync(Product addedProduct)
-    {
+    {   
+        addedProduct.UpdatedDate = DateTime.UtcNow;
         dbContext.Update(addedProduct);
         await dbContext.SaveChangesAsync();
     }

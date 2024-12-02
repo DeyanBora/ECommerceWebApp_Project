@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ECommerceWebApp.Shared.DTOs;
+namespace ECommerceWebApp.Shared.DTOs.ProductDtos;
 
 
 public record GetProductsDto(
@@ -26,7 +26,7 @@ public record ProductDto(
 
 // DTO for creating a product
 public record CreateProductDto(
-    [Required][StringLength(50)] string ErpCode, 
+    [Required][StringLength(50)] string ErpCode,
     [Required][StringLength(50)] string Title,
     [Required][StringLength(100)] string Description,
     [Required][Range(0, double.MaxValue)] decimal Price,
@@ -101,7 +101,7 @@ public record ProductDtov1(
     int BrandId,
     int ManufacturerId,
     string? Slug
-); 
+);
 public record GetProductsDtoV2(
     int PageNumber = 1,
     int PageSize = 5,
@@ -111,7 +111,7 @@ public record GetProductsDtoV2(
 
 public record ProductDtov2(
     int Id,
-    string ErpCode, 
+    string ErpCode,
     string Title,
     string Description,
     decimal Price,

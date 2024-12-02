@@ -29,6 +29,7 @@ public class CategoriesRepository : ICategoriesRepository
 
     public async Task CreateAsync(Category category)
     {
+        category.CreatedDate = DateTime.UtcNow;
         dbContext.Categories.Add(category);
         await dbContext.SaveChangesAsync();
 
@@ -37,6 +38,7 @@ public class CategoriesRepository : ICategoriesRepository
 
     public async Task UpdateAsync(Category category)
     {
+        category.UpdatedDate = DateTime.UtcNow;
         dbContext.Categories.Update(category);
         await dbContext.SaveChangesAsync();
     }

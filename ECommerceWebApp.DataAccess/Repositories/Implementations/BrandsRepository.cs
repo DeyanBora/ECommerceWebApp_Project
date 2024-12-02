@@ -29,6 +29,7 @@ public class BrandsRepository : IBrandsRepository
 
     public async Task CreateAsync(Brand brand)
     {
+        brand.CreatedDate = DateTime.UtcNow;
         dbContext.Brands.Add(brand);
         await dbContext.SaveChangesAsync();
 
@@ -37,6 +38,7 @@ public class BrandsRepository : IBrandsRepository
 
     public async Task UpdateAsync(Brand brand)
     {
+        brand.UpdatedDate = DateTime.UtcNow;
         dbContext.Brands.Update(brand);
         await dbContext.SaveChangesAsync();
     }

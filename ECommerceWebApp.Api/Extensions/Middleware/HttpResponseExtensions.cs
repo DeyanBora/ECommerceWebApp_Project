@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace ECommerceWebApp.Api.Endpoints;
+namespace ECommerceWebApp.Api.Extensions.Middleware;
 
 public static class HttpResponseExtensions
 {

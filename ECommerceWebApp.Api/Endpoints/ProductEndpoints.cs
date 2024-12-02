@@ -1,8 +1,7 @@
-﻿using ECommerceWebApp.Business.Interfaces;
-using ECommerceWebApp.Business.Services;
+﻿using ECommerceWebApp.Api.Extensions.Middleware;
+using ECommerceWebApp.Business.Interfaces;
 using ECommerceWebApp.Business.Services.Interfaces;
-using ECommerceWebApp.Shared.DTOs;
-using System.Threading;
+using ECommerceWebApp.Shared.DTOs.ProductDtos;
 
 namespace ECommerceWebApp.Api.Endpoints;
 

@@ -44,6 +44,7 @@ public class UserRepository : IUserRepository
 
     public async Task CreateAsync(User user)
     {
+        user.CreatedDate = DateTime.UtcNow;
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync();
         logger.LogInformation("Created User with ID {Id} and Name {FirstName}", user.Id, user.FirstName);
@@ -51,6 +52,7 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user)
     {
+        user.UpdatedDate = DateTime.UtcNow;
         dbContext.Users.Update(user);
         await dbContext.SaveChangesAsync();
         logger.LogInformation("Updated User with ID {Id}", user.Id);

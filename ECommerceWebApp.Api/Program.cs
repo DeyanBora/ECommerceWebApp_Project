@@ -1,8 +1,8 @@
 using ECommerceWebApp.Api.Authenticate.Implementations;
 using ECommerceWebApp.Api.Authenticate.Interfaces;
 using ECommerceWebApp.Api.Cors;
-using ECommerceWebApp.Api.Endpoints;
 using ECommerceWebApp.Api.ErrorHandling;
+using ECommerceWebApp.Api.Extensions.Endpoint;
 using ECommerceWebApp.Api.JWT;
 using ECommerceWebApp.Api.OpenAPI;
 using ECommerceWebApp.Business.Interfaces;
@@ -10,8 +10,6 @@ using ECommerceWebApp.Business.Services;
 using ECommerceWebApp.Business.Services.Interfaces;
 using ECommerceWebApp.DataAccess.Data;
 using ECommerceWebApp.DataAccess.Data.Extensions;
-using ECommerceWebApp.DataAccess.Repositories.Implementations;
-using ECommerceWebApp.DataAccess.Repositories.Interfaces;
 using ECommerceWebApp.Entities.Entities.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -29,22 +27,15 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 // Register Repositories
 builder.Services.AddRepositories(builder.Configuration);
 
+//Register HttpClient with ElasticUrl to connect to ElasticSearch
 var elasticUrl = builder.Configuration.GetSection("ElasticSettings:Url").Value;
-
-// Register ISearchService with HttpClient
-builder.Services.AddHttpClient<ISearchService, SearchService>(client =>
-{
-    client.BaseAddress = new Uri(elasticUrl); // Replace with your Elasticsearch API URL
-
-});
 var handler = new HttpClientHandler
 {
     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
 };
-
 builder.Services.AddHttpClient<IElasticApiService, ElasticApiService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5118"); // Replace with your Elasticsearch API URL
+    client.BaseAddress = new Uri("elasticUrl"); 
 })
 .ConfigurePrimaryHttpMessageHandler(() => handler);
 
@@ -57,16 +48,11 @@ builder.Services.AddSingleton<ITokenGenerator, TokenGenerator>();
 // Register all services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-
-builder.Services.AddScoped<IBrandsRepository, BrandsRepository>();
-builder.Services.AddScoped<IManufacturersRepository, ManufacturersRepository>();
-builder.Services.AddScoped<ICategoriesRepository, CategoriesRepository>();
-builder.Services.AddScoped<IProductsRepository, ProductRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ITokenGeneratorService, TokenGeneratorService>();
+
 //Register Elastic
 builder.Services.AddScoped<IElasticApiService, ElasticApiService>();
-//builder.Services.AddScoped<ElasticBuilderService>();
 
 // Register DbContext with SQL Server
 builder.Services.AddDbContext<ECommerceContext>(options =>
@@ -130,32 +116,25 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 // Swagger Configuration
 builder.Services.AddSwaggerGen()
     .AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>()
     .AddEndpointsApiExplorer();
 
-// Logging Configuration
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
-
-
 var app = builder.Build();
 
 //Exception Handling Middleware
-app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.ConfigureExceptionHandler());
+//app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.ConfigureExceptionHandler());
 // app.UseMiddleware<RequestTimingMiddleware>();
 
 //Initialize Database EF
 await app.Services.InitializeDbAsync();
 
-app.UseRouting();
 //CORS Middleware
+app.UseRouting();
 app.UseCors("ElasticCors"); 
 
-//Authentication & Authorization Middleware
+//Authentication and Authorization Middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -175,13 +154,6 @@ if (app.Environment.IsDevelopment())
 }
 
 // Endpoint Mapping
-app.MapProductsEndpoint();
-app.MapAuthEndpoint();
-app.MapSearchEndpoint();
-app.MapUserEndpoints();
-app.MapElasticEndpoints();
-app.MapBrandsEndpoint();
-app.MapCategoriesEndpoint();
-app.MapManufacturersEndpoint();
+app.MapApiEndpoints();
 
 app.Run();

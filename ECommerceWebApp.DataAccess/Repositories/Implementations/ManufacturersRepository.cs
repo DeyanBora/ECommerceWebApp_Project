@@ -29,6 +29,7 @@ public class ManufacturersRepository : IManufacturersRepository
 
     public async Task CreateAsync(Manufacturer manufacturer)
     {
+        manufacturer.CreatedDate = DateTime.UtcNow;
         dbContext.Manufacturers.Add(manufacturer);
         await dbContext.SaveChangesAsync();
 
@@ -37,6 +38,7 @@ public class ManufacturersRepository : IManufacturersRepository
 
     public async Task UpdateAsync(Manufacturer manufacturer)
     {
+        manufacturer.UpdatedDate = DateTime.UtcNow;
         dbContext.Manufacturers.Update(manufacturer);
         await dbContext.SaveChangesAsync();
     }

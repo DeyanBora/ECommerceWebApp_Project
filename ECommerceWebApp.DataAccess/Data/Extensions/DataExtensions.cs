@@ -20,7 +20,11 @@ public static class DataExtensions
         var ConnectString = configuration.GetConnectionString("ECommerceContext");
         services.AddSqlServer<ECommerceContext>(ConnectString)
                 .AddScoped<IProductsRepository, ProductRepository>()
-                .AddScoped<IUserRepository, UserRepository>();
+                .AddScoped<IUserRepository, UserRepository>()
+                .AddScoped<IBrandsRepository, BrandsRepository>()
+                .AddScoped<IManufacturersRepository, ManufacturersRepository>()
+                .AddScoped<ICategoriesRepository, CategoriesRepository>();
+
         return services;
     }
 }
